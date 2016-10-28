@@ -5,35 +5,23 @@
 import os
 import re
 
-
 class find_repeat_words(object):
 
-    def find_words(self):
+#------------------------将文章的字幕库存到该表中--------------------------------------------------
+    all_list = []
+#------------------------将文章的名字与对应的单词构成字典--------------------------------------------------
+    all_dic = {}
+
+    def find_words(self, article_path):
 #--------------------------------检查文安路径是否合法，采取正则------------------------------------------
 
-        article_path = input("请输入您需要检索的文章路径：示例F:\\abc\n")
-        article_path_check_match = re.compile(r'^[CDEFGH]\:\\[A-Za-z0-9_]*')
-
-
-        while not article_path_check_match:
-            article_path = input("磁盘不存在或者路径有误，请核对后再输入你需要照片去重的文件夹路径！示例F:\\abc\n")
-            article_path = re.compile(r'^[CDEFGH]\:\\[A-Za-z0-9_]*')
-            article_path_check_match = article_path.match(article_path)
-            #print('--',article_path_check_match)
-        while article_path_check_match:
-            if not os.path.exists(r'%s'%article_path):
-                article_path = input("你输入的文件夹不存在，请核对后再输入你需要照片去重的文件夹路径！\n")
-                article_path = re.compile(r'^[CDEFGH]\:\\[A-Za-z0-9_]*')
-                article_path_check_match = article_path.match(article_path)
+        if not os.path.exists(r'%s'%article_path):
+            print ("文章库文件夹不存在")
 #-----------------------os中文件是否存在的判断---------------------------------------------------------
-            if os.path.exists(r'%s'%article_path):
-                break
 
-        file_name = os.listdir(r"%s"%article_path)
-#------------------------将文章的字幕库存到该表中--------------------------------------------------
-        all_list = []
-#------------------------将文章的名字与对应的单词构成字典--------------------------------------------------
-        all_dic = {}
+        #file_name = os.listdir(r'%s'%article_path)
+        file_name = os.listdir(article_path)
+        print ("file_name:",file_name)
 #------------------------不重复单词表--------------------------------------------------
         words_ku_not_repeat = []
 #-------------------------不重复单词出现次数的字典-------------------------------------------------
@@ -41,11 +29,13 @@ class find_repeat_words(object):
         i = 0
         for temp in file_name:
             if re.search('.txt$',temp):
+                print ("check article:", temp)
 #-------------------------将寻找路径改为当前工作路径-------------------------------------------------
-                os.chdir(r"%s"%article_path)
-                file_name_tmp = open(temp,"r",encoding='utf-8')
+#                os.chdir(r"%s"%article_path)
+                file_name_tmp = open(article_path+temp,"r",encoding='utf-8')
 #-------------------------读取每篇文章中的所有内容存到表中-------------------------------------------------
                 content = file_name_tmp.readlines()
+                print ("about content:", content)
                 for line in content:
 #--------------------------将每一行单词分隔开形成孤立单词------------------------------------------------
                     words = line.split(' ')
@@ -66,22 +56,23 @@ class find_repeat_words(object):
 #-----------------------------此处必须进行浅复制，因为py是动态数据类型，引用与数据分开的特点---------------------------------------------
                 list_copy = words_ku_not_repeat.copy()
 
-                all_list.append(list_copy)
+                self.all_list.append(list_copy)
 #------------------------------字典key为文章名字，向字典中添加单词库作为value--------------------------------------------
-                all_dic[temp] = list_copy
+                self.all_dic[temp] = list_copy
 #-------------------------------删除档次的库，否则会在微端继续添加导致库累加重复而失败-------------------------------------------
                 words_ku_not_repeat.clear()
 
                 #测试程序
-                #print(all_list)
-                #print(len(all_list))
-                #all_dic.append(words_ku_not_repeat2)
+                print("self.all_list:", self.all_list)
+                print("self.all_dic:", self.all_dic)
+                #print(len(self.all_list))
+                #self.all_dic.append(words_ku_not_repeat2)
 
             #print(words_ku_not_repeat)
 
 #------------------------------函数返回值是单词库的表和字典--------------------------------------------
-        #print(all_dic)   #打印形成单词库的字典
-        return all_list,all_dic
+        #print(self.all_dic)   #打印形成单词库的字典
+        return self.all_list,self.all_dic
 
 #-------------------------------该函数是为了获取到不同文章出现次数，暂时留用-------------------------------------------
     def find_word_weigh(self):
@@ -106,7 +97,6 @@ class find_repeat_words(object):
 
 #----------------------------找出权重值比较高的文章----------------------------------------------
     def find_weigh_topic(self):
-        [words_repeat_dic,all_topic_dic] = self.find_words()
         find_list = []
 #-----------------------------输入的单词放入表中方便比对---------------------------------------------
         input_k = input('请输入需要索引的单词，结束输入输入quit结束！\n')
@@ -120,14 +110,14 @@ class find_repeat_words(object):
 
         times = 0
 #------------------------------遍历词库字典，该次数也是需要找到的文章--------------------------------------------
-        for (j,k) in all_topic_dic.items():
+        for (j,k) in self.all_dic.items():
             for i in range(len(find_list)):
 #------------------------------初始化字典的value（出现个数）都为0--------------------------------------------
                 if i == 0:
                     topic_qz[j] =  times
 #-------------------------------索引利用tryexcept模式，避免索引不到抛出异常，再多引不到时候保持值不变-------------------------------------------
                 try:
-                 if all_topic_dic[j].index(find_list[i]):
+                 if self.all_dic[j].index(find_list[i]):
                         topic_qz[j] =  topic_qz[j] + 1
                 except:
                     topic_qz[j] = topic_qz[j]
@@ -143,4 +133,5 @@ class find_repeat_words(object):
 
 if __name__ == '__main__':
     find_rw = find_repeat_words()
+    find_rw.find_words("./Articles/")
     find_rw.find_weigh_topic()
